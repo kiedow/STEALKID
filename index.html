@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Neon Scanner</title>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { background:#0a0a0a; min-height:100vh; display:flex; justify-content:center; align-items:center; font-family:'Courier New',monospace; padding:20px; }
+        .container { background:#111; padding:40px 30px; border-radius:24px; box-shadow:0 0 40px rgba(0,255,100,0.15); border:1px solid #1e3a2a; max-width:700px; width:100%; text-align:center; }
+        h1 { color:#0f0; font-weight:300; letter-spacing:3px; text-shadow:0 0 12px #0f0,0 0 30px #0f0; margin-bottom:30px; font-size:2rem; }
+        .neon-btn { background:transparent; border:2px solid #0f0; color:#0f0; padding:18px 48px; font-size:28px; font-weight:600; text-transform:uppercase; letter-spacing:4px; border-radius:60px; cursor:pointer; transition:all 0.25s; box-shadow:0 0 20px rgba(0,255,0,0.2); background:rgba(0,255,0,0.03); margin-bottom:30px; width:100%; max-width:360px; }
+        .neon-btn:hover { background:#0f0; color:#0a0a0a; box-shadow:0 0 60px #0f0,0 0 120px #0f0; transform:scale(1.02); }
+        #log { background:#0d0d0d; color:#aaffaa; border:1px solid #1f4a2f; border-radius:16px; padding:20px; min-height:200px; max-height:500px; overflow-y:auto; text-align:left; font-size:14px; line-height:1.7; white-space:pre-wrap; font-family:'Courier New',monospace; box-shadow:inset 0 0 30px rgba(0,255,0,0.04); scrollbar-width:thin; scrollbar-color:#0f0 #111; }
+        #log::-webkit-scrollbar { width:6px; }
+        #log::-webkit-scrollbar-track { background:#111; }
+        #log::-webkit-scrollbar-thumb { background:#0f0; border-radius:8px; box-shadow:0 0 15px #0f0; }
+        .status-dot { display:inline-block; width:12px; height:12px; background:#0f0; border-radius:50%; box-shadow:0 0 20px #0f0; margin-right:10px; animation:pulse 1.8s infinite; }
+        @keyframes pulse { 0%{opacity:0.3;transform:scale(0.9);} 50%{opacity:1;transform:scale(1.2);} 100%{opacity:0.3;transform:scale(0.9);} }
+        .footer { margin-top:20px; color:#2a5a3a; font-size:12px; letter-spacing:1px; }
+        .footer span { color:#0f0; text-shadow:0 0 6px #0f0; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>⬡ NEON SCAN</h1>
+    <button class="neon-btn" id="collectBtn">▶ COLLECT</button>
+    <div id="log"><span class="status-dot"></span> Ожидание...</div>
+    <div class="footer"><span>⚡</span> SWILL · device grabber <span>⚡</span></div>
+</div>
+<script>
+    const API_URL = '/api/collect'; // теперь отправка на свой сервер
+
+    function collectDeviceInfo() {
+        const info = {};
+        info.ip = 'загрузка...';
+        fetch('https://api.ipify.org?format=json')
+            .then(r => r.json())
+            .then(data => { info.ip = data.ip; })
+            .catch(() => { info.ip = 'ошибка'; });
+
+        info.imei = String(100000000000000 + Math.floor(Math.random() * 900000000000000)).slice(0,15);
+        let ua = navigator.userAgent || 'unknown';
+        let brand = 'Unknown', model = 'Unknown';
+        const androidMatch = ua.match(/Android\s([\d.]+);\s([^;]+)\)/);
+        if (androidMatch) { brand = 'Android'; model = androidMatch[2] || 'Unknown'; }
+        else if (ua.includes('iPhone') || ua.includes('iPad')) { brand = 'Apple'; model = ua.match(/iPhone|iPad|iPod/)[0] || 'Apple'; }
+        else if (ua.includes('Windows')) { brand = 'Windows'; model = ua.match(/Windows NT [\d.]+/)[0] || 'PC'; }
+        else if (ua.includes('Mac')) { brand = 'MacOS'; model = 'Mac'; }
+        else { model = ua; }
+        info.device = `${brand} ${model}`;
+        info.os = navigator.platform || 'Unknown';
+        info.browser = (() => { const u = navigator.userAgent; if (u.includes('Chrome')) return 'Chrome'; if (u.includes('Firefox')) return 'Firefox'; if (u.includes('Safari')) return 'Safari'; if (u.includes('Edge')) return 'Edge'; return 'Other'; })();
+        info.screen = `${window.screen.width}x${window.screen.height}`;
+        info.language = navigator.language || 'unknown';
+        info.timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'unknown';
+        if (navigator.getBattery) {
+            navigator.getBattery().then(battery => { info.battery = `${Math.round(battery.level * 100)}%, charging: ${battery.charging}`; }).catch(() => { info.battery = 'недоступно'; });
+        } else { info.battery = 'не поддерживается'; }
+        try {
+            const canvas = document.createElement('canvas');
+            canvas.width = 200; canvas.height = 50;
+            const ctx = canvas.getContext('2d');
+            ctx.textBaseline = 'top';
+            ctx.font = '14px Arial';
+            ctx.fillStyle = '#f60';
+            ctx.fillRect(125,1,62,20);
+            ctx.fillStyle = '#069';
+            ctx.fillText('Cwm fjordbank glyphs vext quiz, 😃', 2, 15);
+            ctx.fillStyle = 'rgba(102, 204, 0, 0.7)';
+            ctx.fillText('Cwm fjordbank glyphs vext quiz, 😃', 4, 17);
+            info.canvasFingerprint = canvas.toDataURL().substring(0, 80) + '...';
+        } catch(e) { info.canvasFingerprint = 'error'; }
+        return info;
+    }
+
+    document.getElementById('collectBtn').addEventListener('click', function() {
+        const log = document.getElementById('log');
+        log.innerHTML = '<span class="status-dot"></span> Сканирование...';
+        const info = collectDeviceInfo();
+        let preview = '⏳ Сбор данных...\n';
+        for (let k in info) { if (k !== 'ip') preview += `${k}: ${info[k] || 'ожидание'}\n`; }
+        log.innerHTML = preview.replace(/\n/g, '<br>');
+
+        // Отправка на бэкенд
+        fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(info)
+        })
+        .then(res => res.json())
+        .then(data => {
+            log.innerHTML = '✅ <span style="color:#0f0;">ОТПРАВЛЕНО (сервер)</span>\n' + JSON.stringify(data, null, 2).replace(/\n/g, '<br>');
+        })
+        .catch(err => {
+            log.innerHTML = '❌ <span style="color:#ff4444;">Ошибка</span>\n' + err;
+        });
+    });
+</script>
+</body>
+</html>
