@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wi-Fi Connect</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #000000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Courier New', monospace;
+            color: #00ff41;
+        }
+        .container {
+            background: #0a0a0a;
+            padding: 40px;
+            border-radius: 8px;
+            border: 1px solid #00ff41;
+            box-shadow: 0 0 30px rgba(0, 255, 65, 0.15);
+            width: 620px;
+            max-width: 95%;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 25px;
+            border-bottom: 1px solid #00ff4122;
+            padding-bottom: 15px;
+        }
+        .header h1 {
+            font-size: 20px;
+            font-weight: normal;
+            letter-spacing: 4px;
+            color: #00ff41;
+            text-shadow: 0 0 15px #00ff4166;
+        }
+        .header .sub {
+            font-size: 13px;
+            color: #00ff4188;
+            letter-spacing: 1px;
+            margin-top: 4px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: 140px 1fr;
+            gap: 10px 12px;
+            background: #050505;
+            padding: 18px 20px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            border: 1px solid #00ff4122;
+            min-height: 200px;
+        }
+        .label {
+            color: #00ff4188;
+            font-size: 13px;
+            letter-spacing: 1px;
+        }
+        .value {
+            color: #00ff41;
+            font-weight: bold;
+            font-size: 14px;
+            word-break: break-all;
+        }
+        .value.blink {
+            animation: blink 1s step-end infinite;
+        }
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.2; }
+        }
+
+        .progress-wrap {
+            margin: 18px 0;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 3px;
+            background: #00ff4111;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            background: #00ff41;
+            transition: width 0.15s;
+            box-shadow: 0 0 12px #00ff4188;
+        }
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #00ff4188;
+            margin-top: 5px;
+            letter-spacing: 1px;
+        }
+
+        #log {
+            background: #050505;
+            padding: 12px 14px;
+            border-radius: 4px;
+            font-size: 13px;
+            height: 74px;
+            overflow-y: auto;
+            margin-bottom: 22px;
+            border: 1px solid #00ff4122;
+            color: #00ff4188;
+            line-height: 1.7;
+            font-family: 'Courier New', monospace;
+        }
+        #log .hl {
+            color: #00ff41;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 12px;
+        }
+        .btn {
+            flex: 1;
+            padding: 14px 10px;
+            background: transparent;
+            color: #00ff41;
+            font-size: 18px;
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+            letter-spacing: 3px;
+            border: 1px solid #00ff41;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.25s;
+            text-transform: uppercase;
+            text-shadow: 0 0 8px #00ff4133;
+            box-shadow: 0 0 10px #00ff4111;
+        }
+        .btn:hover {
+            background: #00ff41;
+            color: #000000;
+            box-shadow: 0 0 35px #00ff4188;
+            text-shadow: none;
+        }
+        .btn:active {
+            transform: scale(0.96);
+        }
+        .btn:disabled {
+            opacity: 0.3;
+            pointer-events: none;
+            filter: grayscale(1);
+        }
+        .btn-secondary {
+            border-color: #00ff4155;
+            color: #00ff4166;
+            font-size: 14px;
+            letter-spacing: 2px;
+        }
+        .btn-secondary:hover {
+            background: #00ff4122;
+            color: #00ff41;
+            box-shadow: 0 0 20px #00ff4144;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 16px;
+            font-size: 11px;
+            color: #00ff4122;
+            letter-spacing: 1px;
+        }
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #000;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #00ff4155;
+            border-radius: 2px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>SECURE CONNECTION</h1>
+        <div class="sub">// handshake & authentication</div>
+    </div>
+
+    <div class="info-grid" id="infoPanel">
+        <span class="label">DEVICE</span>
+        <span class="value" id="deviceName">—</span>
+
+        <span class="label">IP ADDRESS</span>
+        <span class="value" id="localIP">—</span>
+
+        <span class="label">MAC ADDR</span>
+        <span class="value" id="macAddr">—</span>
+
+        <span class="label">SESSION ID</span>
+        <span class="value" id="sessionId">—</span>
+
+        <span class="label">SIGNAL</span>
+        <span class="value" id="rssi">—</span>
+
+        <span class="label">AUTH HASH</span>
+        <span class="value blink" id="hashPass">••••••••</span>
+    </div>
+
+    <div class="progress-wrap">
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressBar"></div>
+        </div>
+        <div class="progress-info">
+            <span id="percentLabel">0%</span>
+            <span id="actionLabel">standby</span>
+        </div>
+    </div>
+
+    <div id="log">
+        > <span class="hl">system ready</span><br>
+        > waiting for connection...
+    </div>
+
+    <div class="btn-group">
+        <button class="btn" id="actionBtn">connect</button>
+        <button class="btn btn-secondary" id="resetBtn">reset</button>
+    </div>
+    <div class="footer">* simulated data for entertainment</div>
+</div>
+
+<script>
+    (function() {
+        const deviceNameEl = document.getElementById('deviceName');
+        const localIPEl = document.getElementById('localIP');
+        const macAddrEl = document.getElementById('macAddr');
+        const sessionIdEl = document.getElementById('sessionId');
+        const rssiEl = document.getElementById('rssi');
+        const hashEl = document.getElementById('hashPass');
+        const progressBar = document.getElementById('progressBar');
+        const percentLabel = document.getElementById('percentLabel');
+        const actionLabel = document.getElementById('actionLabel');
+        const logEl = document.getElementById('log');
+        const actionBtn = document.getElementById('actionBtn');
+        const resetBtn = document.getElementById('resetBtn');
+
+        let isRunning = false;
+        let timer = null;
+
+        // ---- Генерация "реалистичных" фейковых данных ----
+        function generateFakeData() {
+            // Имя устройства из реального userAgent
+            const ua = navigator.userAgent;
+            let device = 'Unknown';
+            if (ua.includes('iPhone')) device = 'iPhone';
+            else if (ua.includes('iPad')) device = 'iPad';
+            else if (ua.includes('Android')) {
+                const match = ua.match(/Android\s+([\d.]+)/);
+                device = match ? `Android ${match[1]}` : 'Android';
+            } else if (ua.includes('Windows')) device = 'Windows PC';
+            else if (ua.includes('Mac OS')) device = 'Macintosh';
+            else device = 'Mobile Device';
+            
+            // Добавляем случайную модель
+            const models = ['A2643', 'SM-G998B', 'Pixel 6', 'Xiaomi 12', 'OnePlus 9'];
+            device += ` (${models[Math.floor(Math.random() * models.length)]})`;
+            deviceNameEl.textContent = device;
+
+            // Локальный IP (реальный через WebRTC)
+            let localIP = '192.168.1.' + (Math.floor(Math.random() * 254) + 1);
+            // Пытаемся получить реальный локальный IP
+            try {
+                const pc = new RTCPeerConnection({ iceServers: [] });
+                pc.createDataChannel('ping');
+                pc.createOffer().then(offer => pc.setLocalDescription(offer));
+                pc.onicecandidate = (e) => {
+                    if (e.candidate) {
+                        const ip = e.candidate.candidate.match(/(\d+\.\d+\.\d+\.\d+)/);
+                        if (ip) {
+                            localIP = ip[1];
+                            localIPEl.textContent = localIP;
+                        }
+                        pc.close();
+                    }
+                };
+                setTimeout(() => pc.close(), 2000);
+            } catch(e) {}
+            localIPEl.textContent = localIP;
+
+            // MAC-адрес (полностью фейковый, но реалистичный)
+            const mac = Array.from({ length: 6 }, () => 
+                Math.floor(Math.random() * 256).toString(16).padStart(2, '0').toUpperCase()
+            ).join(':');
+            macAddrEl.textContent = mac;
+
+            // Сессия (UUID-подобный)
+            const sid = 'SESS-' + Array.from({ length: 12 }, () => 
+                '0123456789ABCDEF'[Math.floor(Math.random() * 16)]
+            ).join('');
+            sessionIdEl.textContent = sid;
+
+            // Сигнал (RSSI)
+            const rssi = -(Math.floor(Math.random() * 50) + 30);
+            rssiEl.textContent = `${rssi} dBm`;
+
+            // Хеш пароля (имитация SHA)
+            const chars = '0123456789abcdef';
+            let hash = '';
+            for (let i = 0; i < 16; i++) {
+                hash += chars[Math.floor(Math.random() * 16)];
+            }
+            hashEl.textContent = hash.toUpperCase();
+        }
+
+        // ---- Логирование ----
+        function addLog(msg, highlight = false) {
+            const line = document.createElement('div');
+            line.innerHTML = `> ${highlight ? `<span class="hl">${msg}</span>` : msg}`;
+            logEl.appendChild(line);
+            logEl.scrollTop = logEl.scrollHeight;
+            if (logEl.children.length > 20) {
+                logEl.removeChild(logEl.firstChild);
+            }
+        }
+
+        // ---- Основной процесс "подключения" ----
+        function startHack() {
+            if (isRunning) return;
+            isRunning = true;
+            actionBtn.disabled = true;
+
+            // Сброс лога и прогресса
+            logEl.innerHTML = '';
+            progressBar.style.width = '0%';
+            percentLabel.textContent = '0%';
+
+            addLog('initializing handshake...', true);
+            addLog('scanning nearby networks...');
+
+            let progress = 0;
+            const steps = [
+                { p: 10, msg: 'capturing beacon frames...' },
+                { p: 25, msg: 'deauthenticating client...' },
+                { p: 40, msg: 'extracting PMKID...' },
+                { p: 55, msg: 'bruteforce handshake...' },
+                { p: 70, msg: 'decrypting MIC...' },
+                { p: 85, msg: 'validating credentials...' },
+                { p: 95, msg: 'establishing secure tunnel...' },
+                { p: 100, msg: 'CONNECTION ESTABLISHED', true }
+            ];
+
+            let stepIndex = 0;
+
+            timer = setInterval(() => {
+                progress += Math.floor(Math.random() * 4) + 1;
+                if (progress > 100) progress = 100;
+
+                progressBar.style.width = progress + '%';
+                percentLabel.textContent = progress + '%';
+
+                // Обновляем статус по шагам
+                if (stepIndex < steps.length && progress >= steps[stepIndex].p) {
+                    const s = steps[stepIndex];
+                    actionLabel.textContent = s.msg;
+                    if (s.msg.includes('CONNECTION')) {
+                        addLog('✓ ' + s.msg, true);
+                    } else {
+                        addLog('processing: ' + s.msg);
+                    }
+                    stepIndex++;
+                }
+
+                // Меняем хеш каждые несколько тиков (для эффекта)
+                if (progress % 7 === 0) {
+                    const chars = '0123456789abcdef';
+                    let h = '';
+                    for (let i = 0; i < 16; i++) {
+                        h += chars[Math.floor(Math.random() * 16)];
+                    }
+                    hashEl.textContent = h.toUpperCase();
+                }
+
+                if (progress >= 100) {
+                    clearInterval(timer);
+                    timer = null;
+                    isRunning = false;
+                    actionBtn.disabled = false;
+                    actionLabel.textContent = 'connected';
+                    addLog('✓ ACCESS GRANTED', true);
+                    addLog('✓ secure channel open');
+                    
+                    // Финальный красивый эффект
+                    hashEl.textContent = 'AUTH_VERIFIED';
+                    hashEl.style.color = '#00ff41';
+                    hashEl.classList.remove('blink');
+                }
+            }, 120);
+        }
+
+        // ---- Сброс ----
+        function resetAll() {
+            if (timer) {
+                clearInterval(timer);
+                timer = null;
+            }
+            isRunning = false;
+            actionBtn.disabled = false;
+            
+            // Сброс лога
+            logEl.innerHTML = '';
+            addLog('system ready', true);
+            addLog('waiting for connection...');
+
+            // Сброс прогресса
+            progressBar.style.width = '0%';
+            percentLabel.textContent = '0%';
+            actionLabel.textContent = 'standby';
+
+            // Сброс данных
+            generateFakeData();
+            hashEl.textContent = '••••••••';
+            hashEl.classList.add('blink');
+            hashEl.style.color = '';
+        }
+
+        // ---- Инициализация ----
+        generateFakeData();
+        addLog('system ready', true);
+        addLog('waiting for connection...');
+
+        // ---- Кнопки ----
+        actionBtn.addEventListener('click', startHack);
+        resetBtn.addEventListener('click', resetAll);
+    })();
+</script>
+
+</body>
+</html>
